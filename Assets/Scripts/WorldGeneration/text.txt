@@ -1,0 +1,186 @@
+[HideInInspector] public static string[] noiseOptions = {"Perlin Noise", "Colored Noise", "Rounded Color Noise", "Lines Noise", "Sharp Lines", "Cellular Noise"};
+    [HideInInspector] public static string[] maskOptions = {"None","Perlin Noise", "Circle", "Perlin Island"};
+    [HideInInspector] public int indexForNoiseOptions;
+    [HideInInspector] public int indexForMaskOptions;
+    [SerializeField] private Color[] colors;
+
+    [Header("Sizes")]
+    [SerializeField] private int width;
+    [SerializeField] private int height;
+    [SerializeField] private Vector2 offset;
+    [SerializeField] private float scale;
+
+    [Range(0,100)] [SerializeField] private float cap;
+    [Range(0,100)] [SerializeField] private float maskValue = 0;
+    [Range(1,20)] [SerializeField] private float lineWidth = 6;
+
+    private Vector2 offsetR;
+    private Vector2 offsetG;
+    private Vector2 offsetB;
+
+    private Vector2 unusedOffset;
+
+    private bool firstHere = true;
+
+    private Vector2[,] cellpoints;
+    
+
+    Renderer rend;
+    // Start is called before the first frame update
+    void Start(){
+        rend = gameObject.GetComponent<Renderer>();
+        offsetR = new Vector2(UnityEngine.Random.Range(0.0f, 1000.0f), UnityEngine.Random.Range(0.0f, 1000.0f));
+        offsetG = new Vector2(UnityEngine.Random.Range(0.0f, 1000.0f), UnityEngine.Random.Range(0.0f, 1000.0f));
+        offsetB = new Vector2(UnityEngine.Random.Range(0.0f, 1000.0f), UnityEngine.Random.Range(0.0f, 1000.0f));
+        unusedOffset = new Vector2(UnityEngine.Random.Range(0.0f, 1000.0f), UnityEngine.Random.Range(0.0f, 1000.0f));
+        PrepCNoise(width, height);
+        rend.material.mainTexture = GenerateTexture();
+    }
+
+    void Update()
+    {
+        
+    }
+
+    public void MakeTex(){
+        rend = gameObject.GetComponent<Renderer>();
+        rend.sharedMaterial.mainTexture = GenerateTexture();
+    }
+    Texture2D GenerateTexture(){
+        Texture2D texture = new Texture2D(width,height);
+
+        for (int w = 0; w < width; w++)
+        {
+            for (int h = 0; h < height; h++)
+            {
+                Color color = CalculateColor(w,h);
+                texture.SetPixel(w,h,color);
+            }
+        }
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.Apply();
+        return texture;
+    }
+
+    Color CalculateColor(int w, int h){
+        float r = Mathf.PerlinNoise(offset.x + offsetR.x +(float) w / width * scale,offset.y + offsetR.y +(float) h / height * scale);
+        float g = Mathf.PerlinNoise(offset.x + offsetG.x +(float) w / width * scale,offset.y + offsetG.y +(float) h / height * scale);
+        float b = Mathf.PerlinNoise(offset.x + offsetB.x +(float) w / width * scale,offset.y + offsetB.y +(float) h / height * scale);
+        float H,S,V;
+        Color.RGBToHSV(new Color(r,g,b),out H,out S, out V);
+        switch(indexForNoiseOptions){
+            case 0:
+                return Mask(new Color(r,r,r), w, h, width, height);
+            case 1:
+                return Mask(new Color(r,g,b), w, h, width, height);
+            case 2:
+                return Mask(RoundColor(new Color(r,g,b)), w, h, width, height);
+            case 3:
+                return Mask(Color.HSVToRGB(0,0,V), w, h, width, height);
+            case 4:
+                if(V > (cap-lineWidth/2)/100 && V < (cap+lineWidth/2)/100){
+                    V = 0;
+                }else{
+                    V = 100;
+                }
+                return Mask(Color.HSVToRGB(0,0,V), w, h, width, height);
+            case 5:
+                return Mask(CellularNoise(w, h, width, height),w, h, width, height);
+            default:
+                return Mask(Color.cyan, w, h, width, height);
+        }
+    }
+
+    Color RoundColor(Color c){
+        if(colors[0] == null){
+            return c;
+        }
+        float[] distances = new float[colors.Length];
+        for(int i = 0; i< colors.Length; i++)
+        {
+            Vector4 cv4 = c;
+            Vector4 carrayv4 = colors[i];
+            distances[i] = Vector3.Distance(cv4, carrayv4);
+        }
+        float shortestD = Mathf.Min(distances);
+        int index = Array.IndexOf(distances,shortestD);
+        return colors[index];
+    }
+
+    void PrepCNoise(int width, int height){
+        cellpoints = new Vector2[width, height];
+        for (int i = 0; i < 10*scale; i++)
+        {
+            for (int j = 0; j < 10*scale; j++)
+            {
+               cellpoints[i,j] = new Vector2(UnityEngine.Random.Range(0.0f, (int)width/(10*scale)), UnityEngine.Random.Range(0.0f, (int)height/(10*scale))) + new Vector2(i*width/(10*scale), j*height/(10*scale));      
+            }
+        }
+    }
+    Color CellularNoise(int w, int h, int width, int height){
+        int i,j;
+        i = (int) (w /(width / (10*scale)) - w % (width/(10*scale)));
+        j = (int) (h /(height / (10*scale)) - h % (height/(10*scale)));
+        int centerI = i;
+        int centerJ = j;
+        i -= 1;
+        j -= 1;
+
+        float[] dist = new float[9];
+        for (int loopVar = 0; loopVar < 9; loopVar++)
+        {
+            if(i < 0){
+            }else if(j < 0){
+            }else{
+                dist[loopVar] = Vector2.Distance(cellpoints[i,j], new Vector2(w,h));
+                if(i == centerI+1){
+                    i = centerI-1;
+                    j += 1;
+                }else{
+                    i += 1;
+                }
+                if(firstHere){
+                    print(i + " " + j);
+                    
+                }
+            }
+        }
+        firstHere = false;
+        float shortestD = Mathf.Min(dist);
+        int index = Array.IndexOf(dist,shortestD);
+        return new Color(shortestD,shortestD,shortestD);
+    }
+    Color Mask(Color c, int w, int h, int width, int height){
+        switch (indexForMaskOptions)
+        {
+            case 0:
+                return c;
+            case 1:
+                float pValue = Mathf.PerlinNoise(offset.x + offsetR.x +(float) w / width * scale,offset.y + offsetR.y +(float) h / height * scale);
+                if(maskValue == 0){
+                    return new Color(0,0,0);
+                }else if(pValue > (maskValue-lineWidth/2)/100 && pValue < (maskValue+lineWidth/2)/100){
+                    return c;
+                }else{
+                    return new Color(0,0,0);
+                }
+            case 2:
+                if(maskValue == 0){
+                    return new Color(0,0,0);
+                }else if((w-width/2)*(w-width/2) + (h-height/2)*(h-height/2) <= (maskValue*Math.Sqrt(width*width + height*height)/100)*(maskValue*Math.Sqrt(width*width + height*height)/100)){
+                    return c;
+                }else{
+                    return new Color(0,0,0);
+                }
+            case 3:
+                if(maskValue == 0){
+                    return new Color(0,0,0);
+                }else if((w-width/2)*(w-width/2) + (h-height/2)*(h-height/2) <= (maskValue*Math.Sqrt(width*width + height*height)/100)*(maskValue*Math.Sqrt(width*width + height*height)/100)){
+                    return c;
+                }else{
+                    return new Color(0,0,0);
+                }
+            default:
+                return c;
+        }
+    }
