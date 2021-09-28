@@ -1,6 +1,6 @@
 # unitynoise
 
-A program a [Perlin-Noise](https://en.wikipedia.org/wiki/Perlin_noise) feldolgozása a Unity játékengineben, C# nyelven.
+A program a [Perlin-Noise](https://en.wikipedia.org/wiki/Perlin_noise) feldolgozása a Unity játékengine-ben, C# nyelven.
 A legegyszerűbb zaj az alap Perlin noise ![Perlin noise](/kepek/twEtm4boI9.png)
 Ezt a "scale" változóval lehet nagyítani és kicsinyíteni, valamint az "offset" változópárral mozgatni ![Perlin noise mozgatása](/kepek/vbJdXGnlkH.png)
 A zajt a megfelelő RGB skálákkal lehet színezni ![Perlin noise színezése](/kepek/t4udEbycXG.png)
@@ -19,4 +19,4 @@ Futtatáshoz:
   A Unity Editorban a "Scenes" mappában levő "BuildingScene"-t dupla kattintással nyissa meg.
   A baloldali hierarchiában válassza ki a "Plane"-t.
   Jobboldalt a "Noise (Script)" alatt szerkeszthetőek az értékek.
-  A futtatáshoz **NEM** szükséges elindítani a játékot, a "Noise (Script)" automatikusan lefut az editorban amikor adatai megváltoznak. ![színes Perlin noise](/kepek/Unity_tySuhsSDS2.png)
+  A futtatáshoz **NEM** szükséges elindítani a játékot, a "Noise (Script)" automatikusan lefut az editorban, amikor adatai megváltoznak. ![színes Perlin noise](/kepek/Unity_tySuhsSDS2.png)
